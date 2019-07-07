@@ -75,10 +75,16 @@ class AsyncCoreClient:
         reader = AsyncReader(resp)
         return await reader.read_value()
 
+    async def iterate(self, query):
+        resp = await self._execute(query)
+        reader = AsyncReader(resp)
+        async for r in reader.iterate():
+            yield r
+
 
 if __name__ == '__main__':
     import asyncio
     a_client = AsyncCoreClient('http://localhost:8123/')
     loop = asyncio.get_event_loop()
-    res = loop.run_until_complete(a_client.fetch_value('SELECT * FROM trial'))
+    res = loop.run_until_complete(a_client.iterate('SELECT * FROM trial'))
     print(res)

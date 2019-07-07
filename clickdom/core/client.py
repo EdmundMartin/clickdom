@@ -59,14 +59,11 @@ class CoreClient:
         return reader.read_value()
 
 
-
-
-
 if __name__ == '__main__':
     import datetime as dt
     client = CoreClient('http://localhost:8123/')
     res = client.alive
-    #client._execute('CREATE TABLE t (a UInt8, b Tuple(Date, Nullable(Float32))) ENGINE = Memory')
-    #results = client._execute("INSERT INTO t VALUES", (1, (dt.date(2029, 9, 7), None)), (2, (dt.date(2029, 9, 8), 3.14)),)
-    results = client.fetch_value('SELECT * FROM trial')
+    #client._execute('CREATE TABLE LOL (uint_field UInt8) ENGINE = Memory')
+    #results = client.execute("INSERT INTO LOL VALUES", (1, ))
+    results = client.fetch_all('SELECT * FROM LOL')
     print(results)
