@@ -15,7 +15,7 @@ class CoreClient:
         self._url = url
         self._db_params = dict()
         self._db_params['user'] = kwargs.get('user', None)
-        self._db_params['password'] = kwargs.get('password')
+        self._db_params['password'] = kwargs.get('password', None)
         self._db_params['database'] = kwargs.get('database', 'default')
 
     @property

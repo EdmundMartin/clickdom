@@ -1,4 +1,3 @@
-from collections import namedtuple
 from typing import Any, List
 
 from aiohttp import ClientResponse
@@ -22,6 +21,17 @@ def extract_types(resp_line: bytes) -> List[str]:
     return type_values
 
 
+def _composite_type(ch_type: str, val: str):
+    if ch_type.startswith('Array'):
+        return resolve_array(ch_type, val)
+    elif ch_type is 'Nullable':
+        return resolve_nullable(ch_type, val)
+    elif ch_type.startswith('Tuple'):
+        return resolve_tuple(ch_type, val)
+    else:
+        return val
+
+
 def transform(row: bytes, ch_types: List[str]):
     values = [v.decode() for v in row.split(b'\t')]
     row_data = []
@@ -29,14 +39,8 @@ def transform(row: bytes, ch_types: List[str]):
         val, ch_type = i
         if ch_type in CLICK_TO_PY:
             row_data.append(CLICK_TO_PY[ch_type](val))
-        elif ch_type.startswith('Array'):
-            row_data.append(resolve_array(ch_type, val))
-        elif ch_type is 'Nullable':
-            row_data.append(resolve_nullable(ch_type, val))
-        elif ch_type.startswith('Tuple'):
-            row_data.append(resolve_tuple(ch_type, val))
         else:
-            row_data.append(val)
+            row_data.append(_composite_type(ch_type, val))
     return row_data
 
 
@@ -71,13 +75,15 @@ class ResponseReader:
 
     def read_value(self):
         lines = self.response.split(b'\n')
-        headers = read_headers(lines[0])
-        click_types = extract_types(lines[1])
         target_row = lines[2]
         if target_row == b'':
             return
         v = target_row.split(b'\t')[0].decode()
-        print(v)
+        ch_type = lines[1].split(b'\t')[0].decode()
+        if ch_type in CLICK_TO_PY:
+            return CLICK_TO_PY[ch_type](v)
+        else:
+            return _composite_type(ch_type, v)
 
 
 class AsyncReader:
@@ -85,13 +91,22 @@ class AsyncReader:
     def __init__(self, response):
         self.response: ClientResponse = response
 
-    async def read_response(self, fetch_one: bool = False):
-        rows = []
+    async def _extract_headers(self):
         raw_headers = await self.response.content.readline()
         raw_types = await self.response.content.readline()
         headers = read_headers(raw_headers.strip(b'\n'))
         click_types = extract_types(raw_types.strip(b'\n'))
-        print(headers, click_types)
+        return headers, click_types
+
+    async def read_one(self):
+        headers, click_types = await self._extract_headers()
+        line = await self.response.content.readline()
+        data = transform(line.strip(b'\n'), click_types)
+        return Row(headers, data)
+
+    async def read_response(self):
+        rows = []
+        headers, click_types = await self._extract_headers()
         while True:
             line = await self.response.content.readline()
             line = line.strip(b'\n')
@@ -100,3 +115,13 @@ class AsyncReader:
             data = transform(line, click_types)
             rows.append(Row(headers, data))
         return rows
+
+    async def read_value(self):
+        headers, click_types = await self._extract_headers()
+        click_type = click_types[0]
+        data = await self.response.content.readline()
+        val = data.split(b'\t')[0].decode()
+        if click_type in CLICK_TO_PY:
+            return CLICK_TO_PY[click_type](val)
+        else:
+            return _composite_type(click_type, val)

@@ -1,4 +1,4 @@
-from aiohttp.client import ClientSession
+from aiohttp.client import ClientSession, ClientResponse
 
 from clickdom.core.query_builder import query_type, build_query, QueryType
 from clickdom.core.mappings import to_bytes
@@ -57,14 +57,28 @@ class AsyncCoreClient:
         return None
 
     async def execute(self, query_str: str, *args):
-        resp = await self._execute(query_str, *args)
+        resp: ClientResponse = await self._execute(query_str, *args)
+        await resp.close()
+
+    async def fetch_all(self, query):
+        resp = await self._execute(query)
         reader = AsyncReader(resp)
         return await reader.read_response()
+
+    async def fetch_one(self, query):
+        resp = await self._execute(query)
+        reader = AsyncReader(resp)
+        return await reader.read_one()
+
+    async def fetch_value(self, query):
+        resp = await self._execute(query)
+        reader = AsyncReader(resp)
+        return await reader.read_value()
 
 
 if __name__ == '__main__':
     import asyncio
     a_client = AsyncCoreClient('http://localhost:8123/')
     loop = asyncio.get_event_loop()
-    res = loop.run_until_complete(a_client.execute('SELECT * FROM trial'))
+    res = loop.run_until_complete(a_client.fetch_value('SELECT * FROM trial'))
     print(res)

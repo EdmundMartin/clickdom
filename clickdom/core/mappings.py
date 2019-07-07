@@ -102,9 +102,4 @@ def resolve_tuple(ch_type: str, val: str):
             vals.append(CLICK_TO_PY[val_type](tup_val))
         elif val_type.startswith('Nullable'):
             vals.append(resolve_nullable(val_type, tup_val))
-    return vals
-
-
-if __name__ == '__main__':
-    res = to_bytes((1, (dt.date(2018, 9, 7), None)), (2, (dt.date(2018, 9, 8), 3.14)),)
-    print(res)
+    return tuple(vals)
