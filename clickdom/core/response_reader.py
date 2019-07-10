@@ -2,7 +2,7 @@ from typing import Any, List
 
 from aiohttp import ClientResponse
 
-from clickdom.core.mappings import CLICK_TO_PY, resolve_nullable, resolve_tuple, resolve_array
+from clickdom.core.mappings import CLICK_TO_PY, resolve_nullable, resolve_tuple, resolve_array, resolve_low_cardinality
 
 
 def read_headers(resp_line: bytes):
@@ -28,6 +28,8 @@ def _composite_type(ch_type: str, val: str):
         return resolve_nullable(ch_type, val)
     elif ch_type.startswith('Tuple'):
         return resolve_tuple(ch_type, val)
+    elif ch_type.startswith('Low'):
+        return resolve_low_cardinality(ch_type, val)
     else:
         return val
 

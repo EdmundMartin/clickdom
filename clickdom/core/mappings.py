@@ -75,6 +75,11 @@ CLICK_TO_PY = {
 }
 
 
+def resolve_low_cardinality(ch_type: str, val: str):
+    real_type = re.search(r'LowCardinality\((?P<name>[^\)]+)', ch_type).group('name')
+    return CLICK_TO_PY[real_type](val)
+
+
 def resolve_nullable(ch_type: str, val: str):
     if val == 'NULL':
         return None
