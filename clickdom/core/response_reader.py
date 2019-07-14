@@ -127,3 +127,14 @@ class AsyncReader:
             return CLICK_TO_PY[click_type](val)
         else:
             return _composite_type(click_type, val)
+
+    async def read_row(self):
+        headers, click_types = await self._extract_headers()
+        while True:
+            line = await self.response.content.readline()
+            line = line.strip(b'\n')
+            if line == b'':
+                break
+            data = transform(line, click_types)
+            row = Row(headers, data)
+            yield row

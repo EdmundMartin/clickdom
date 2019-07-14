@@ -78,8 +78,8 @@ class AsyncCoreClient:
     async def iterate(self, query):
         resp = await self._execute(query)
         reader = AsyncReader(resp)
-        async for r in reader.iterate():
-            yield r
+        async for row in reader.read_row():
+            yield row
 
 
 if __name__ == '__main__':

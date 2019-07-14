@@ -1,6 +1,8 @@
 import datetime as dt
 import re
 
+from clickdom.core.utils import datetime_to_string, date_to_string
+
 
 def val_to_str(val) -> str:
     if type(val) in [int, float, str]:
@@ -10,9 +12,9 @@ def val_to_str(val) -> str:
     if val is None:
         return 'NULL'
     if type(val) == dt.date:
-        return "'{}',".format(val.strftime('%Y-%m-%d'))
+        return datetime_to_string(val)
     if type(val) == dt.datetime:
-        return "'{}',".format(val.strftime('%Y-%m-%d %H:%M:%S'))
+        return datetime_to_string(val)
 
 
 def tuple_to_bytes(req_tuple):
@@ -54,6 +56,10 @@ def to_nothing(val):
     return None
 
 
+def to_string(val):
+    return val.strip("'")
+
+
 CLICK_TO_PY = {
     'UInt8': int,
     'UInt16': int,
@@ -68,7 +74,7 @@ CLICK_TO_PY = {
     'Decimal': float,
     'Date': to_date,
     'DateTime': to_datetime,
-    'String': str,
+    'String': to_string,
     'FixedString': str,
     'UUID': str,
     'Nothing': to_nothing,

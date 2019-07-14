@@ -26,7 +26,6 @@ class CoreClient:
     def _execute(self, query_str: str, *args):
         q_type = query_type(query_str)
         query = build_query(query_str, q_type, *args)
-
         params = self._db_params
         params['query'] = query
         if args:
@@ -62,8 +61,7 @@ class CoreClient:
 if __name__ == '__main__':
     import datetime as dt
     client = CoreClient('http://localhost:8123/')
-    res = client.alive
-    #client._execute('CREATE TABLE LOL (uint_field UInt8) ENGINE = Memory')
-    #results = client.execute("INSERT INTO LOL VALUES", (1, ))
+    #client._execute('CREATE TABLE LOL (array Array(String), uint_field UInt8) ENGINE = Memory')
+    #results = client.execute("INSERT INTO LOL VALUES", (['Hello', 'World'], 8))
     results = client.fetch_all('SELECT * FROM LOL')
     print(results)
